@@ -17,26 +17,69 @@ if (process.env.DATABASE_URL) {
 
   client.connect().catch(err => {
     console.error('Postgres connect error:', err);
-    process.exit(1);
+    // Do not exit here; let app handle errors gracefully
   });
+
+  // convert sqlite-style ? placeholders into Postgres $1, $2, ...
+  function convertPlaceholders(sql, params = []) {
+    let idx = 0;
+    const newSql = sql.replace(/\?/g, () => {
+      idx += 1;
+      return '$' + idx;
+    });
+    return { sql: newSql, params };
+  }
+
+  // prepare shim so sqlite-style code still works (prepare(...).run(...))
+  const prepare = (sqlTemplate) => {
+    return {
+      run: async (params = []) => {
+        try {
+          const { sql, params: p } = convertPlaceholders(sqlTemplate, params);
+
+          // If it's an INSERT and there's no RETURNING, add RETURNING id for lastID compatibility
+          let finalSql = sql;
+          if (/^\s*insert/i.test(sql) && !/returning/i.test(sql)) {
+            finalSql = sql + ' RETURNING id';
+          }
+
+          const res = await client.query(finalSql, p);
+          const lastID = res.rows?.[0]?.id ?? null;
+          return { lastID, rowCount: res.rowCount, rows: res.rows };
+        } catch (err) {
+          // bubble up
+          throw err;
+        }
+      }
+    };
+  };
 
   module.exports = {
     // return single row
     get: async (sql, params = []) => {
-      const res = await client.query(sql, params);
+      const { sql: s, params: p } = convertPlaceholders(sql, params);
+      const res = await client.query(s, p);
       return res.rows[0];
     },
+
     // return all rows
     all: async (sql, params = []) => {
-      const res = await client.query(sql, params);
+      const { sql: s, params: p } = convertPlaceholders(sql, params);
+      const res = await client.query(s, p);
       return res.rows;
     },
-    // run statement (INSERT/UPDATE/DELETE). returns object with rowCount
+
+    // run statement (INSERT/UPDATE/DELETE). returns object with rowCount (and rows if RETURNING used)
     run: async (sql, params = []) => {
-      const res = await client.query(sql, params);
-      return { rowCount: res.rowCount };
+      const { sql: s, params: p } = convertPlaceholders(sql, params);
+      const res = await client.query(s, p);
+      return { rowCount: res.rowCount, rows: res.rows };
     },
-    // expose client for advanced operations (use sparingly)
+
+    // provide prepare so code that expects sqlite-style prepare works
+    prepare,
+
+    // expose client for advanced operations (migrations, etc)
     client
   };
 
@@ -107,7 +150,7 @@ if (process.env.DATABASE_URL) {
       });
     },
 
-    // expose prepare (synchronous, returns Statement) if needed
+    // expose prepare (synchronous, returns Statement) if needed by app.js
     prepare(sql) {
       return raw.prepare(sql);
     },
