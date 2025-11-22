@@ -1,0 +1,359 @@
+/* public/styles.css — modern clean dashboard */
+:root{
+  --bg:#0f1724;        /* deep backdrop for contrast */
+  --surface:#0b1220;
+  --panel:#0f1724;
+  --card:#0b1220;
+  --muted:#9aa3b2;
+  --accent:#6ee7b7;    /* mint */
+  --accent-2:#60a5fa;  /* blue */
+  --glass: rgba(255,255,255,0.03);
+  --gap:16px;
+  --radius:10px;
+  --mono: "Courier New", monospace;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: linear-gradient(180deg, #071027 0%, #031023 100%);
+  color:#e6eef6;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  padding:20px;
+}
+
+/* Layout */
+.app-grid{
+  display:grid;
+  grid-template-columns: 260px 1fr;
+  gap:var(--gap);
+  max-width:1200px;
+  margin:0 auto;
+  align-items:start;
+}
+
+/* Sidebar */
+.sidebar{
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:var(--radius);
+  padding:20px;
+  min-height:640px;
+  box-shadow: 0 6px 20px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+}
+
+.brand{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+.logo{
+  width:48px;height:48px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  display:flex;align-items:center;justify-content:center;font-weight:800;color:#042027;
+  font-size:18px;
+}
+.brand-text .title{font-weight:700}
+.brand-text .subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* Nav */
+.nav{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.nav-item{
+  padding:10px 12px;border-radius:8px;color:var(--muted);text-decoration:none;font-weight:600;
+}
+.nav-item:hover{background:var(--glass);color:#fff}
+.nav-item.active{background:rgba(96,165,250,0.12);color:var(--accent-2)}
+
+/* Sidebar foot */
+.sidebar-foot{margin-top:18px;border-top:1px solid rgba(255,255,255,0.02);padding-top:12px;font-size:13px;color:var(--muted)}
+.sidebar-foot .strong{color:#fff;margin-top:4px}
+
+/* Main content */
+.main{
+  min-height:640px;
+  .main {
+  padding-bottom: 80px; /* avoid content hiding behind footer */
+}
+
+}
+
+/* Topbar */
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.page-title{margin:0;font-size:20px}
+.page-sub{font-size:13px;color:var(--muted);margin-top:4px}
+.top-right{display:flex;align-items:center;gap:12px}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);
+  background:transparent;color:var(--muted);cursor:pointer;text-decoration:none;font-weight:600;font-size:13px;
+}
+.btn.small{padding:6px 10px;font-size:13px}
+.btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#042027;border:none;box-shadow: 0 6px 18px rgba(96,165,250,0.08)}
+.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04)}
+
+/* Search */
+.search-form{display:flex;gap:8px;align-items:center}
+.search-input{padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#e6eef6;min-width:280px}
+
+/* Stats cards */
+.stats{display:flex;gap:12px;margin-bottom:18px}
+.card{flex:1;padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 6px 20px rgba(2,6,23,0.45)}
+.card .label{font-size:13px;color:var(--muted)}
+.card .value{font-size:20px;font-weight:800;margin-top:8px;color:#fff}
+.card .value.small{font-size:14px;font-weight:600}
+
+/* Panel / table */
+.panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:10px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.panel-title{margin:0}
+.panel-meta{color:var(--muted)}
+.table-wrap{overflow:auto;border-radius:8px}
+.links-table{width:100%;border-collapse:collapse;min-width:780px}
+.links-table thead th{background:rgba(255,255,255,0.02);text-align:left;padding:12px 16px;font-size:13px;color:var(--muted);position:sticky;top:0}
+.links-table tbody td{padding:12px 16px;border-top:1px solid rgba(255,255,255,0.02);vertical-align:middle}
+.links-table tbody tr:hover td{background:rgba(255,255,255,0.01)}
+
+/* ===== TinyLink table layout tweaks (custom columns) ===== */
+.links-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* allow column widths and truncation */
+}
+
+/* Column width hints */
+.short-col { width: 110px; }   /* /abc123 */
+.dest-col { width: calc(100% - 480px); } /* destination takes most space */
+.clicks-col { width: 70px; text-align:center; }
+.created-col { width: 140px; }
+.actions-col { width: 160px; text-align:right; }
+
+/* Truncate long destination nicely */
+.truncate a {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Copy icon refine */
+.copy-btn.icon {
+  background: transparent;
+  border: none;
+  margin-left: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+
+.mono{font-family:var(--mono);color:var(--accent-2);display:flex;gap:8px;align-items:center}
+.copy-btn{background:transparent;border:none;color:var(--muted);cursor:pointer;padding:6px;border-radius:6px}
+.copy-btn:hover{color:#fff;background:rgba(255,255,255,0.02)}
+.truncate{max-width:560px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+
+/* actions */
+.actions{display:flex;gap:8px;align-items:center}
+.actions-col{width:200px}
+
+/* ----------------------
+  Table alignment & polish
+   - center numeric "Clicks"
+   - right-align Actions on desktop, stack on small screens
+   - improved spacing and row dividers
+   - allow destination to wrap
+  ---------------------- */
+
+/* center numeric columns (Clicks) */
+.links-table thead th:nth-child(3),
+.links-table td:nth-child(3) {
+  text-align: center;
+  width: 90px;
+}
+
+/* Actions column alignment and width */
+.links-table thead th.actions-col,
+.links-table td.actions {
+  text-align: right;
+  width: 220px;
+}
+
+/* allow destination strings to wrap and break on long URLs */
+.links-table td.truncate a {
+  white-space: normal;         /* allow wrapping */
+  word-break: break-word;
+  display: inline-block;
+  max-width: 520px;
+}
+
+/* more breathing room for rows and clearer separators */
+.links-table tbody td {
+  padding: 14px 16px;
+  border-top: 1px solid rgba(255,255,255,0.02);
+}
+.links-table tbody tr + tr td {
+  border-top: 1px solid rgba(255,255,255,0.03);
+}
+
+/* Actions layout: right on desktop, flexible on mobile */
+.actions {
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  align-items:center;
+}
+
+/* mobile: stack actions, readable list */
+@media (max-width:720px){
+  .actions {
+    justify-content:flex-start;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+
+  /* Optional: make table adapt on small screens — hide header and show stacked rows */
+  .links-table thead { display: none; }
+  .links-table { min-width: 0; }
+  .links-table tbody td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .links-table tbody tr {
+    margin-bottom: 12px;
+    display: block;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.01);
+  }
+  .links-table td.mono,
+  .links-table td.truncate,
+  .links-table td.actions,
+  .links-table td.muted {
+    padding: 6px 10px;
+  }
+}
+
+/* ----------------------------
+  TinyLink — stacked row overrides
+  (Paste this near the end of styles.css, BEFORE the final .foot block)
+   ---------------------------- */
+
+.link-row td { padding-top: 25px; padding-bottom: 25px; }
+
+/* SHORT column */
+.short-col { width: 110px; } /* keep width hint */
+.short-col .short-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.short-col .short-link {
+  font-size: 15px;
+  color: var(--accent-2);
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+/* DESTINATION — stacked pieces like screenshot */
+.dest-col { /* allow vertical stacking while keeping table layout */
+  padding-left: 0;
+}
+.dest-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dest-line {
+  font-size: 13px;
+  line-height: 14px;
+  color: #4ea0ff;
+  text-decoration: underline;
+  letter-spacing: 1px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Clicks — centered big number */
+.clicks-col { text-align: center; vertical-align: middle; }
+.clicks-number {
+  font-weight: 800;
+  font-size: 18px;
+  color: #fff;
+}
+
+/* Created date */
+.created-col { vertical-align: middle; }
+.created-text {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Actions — stacked vertically (Desktop look from screenshot) */
+.actions-col { width: 160px; }
+.action-stack {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center; /* left align the stacked buttons (matches screenshot) */
+}
+.action-stack .btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+/* make sure copy button looks small and inline */
+.copy-btn {
+  background: transparent;
+  border: none;
+  margin-left: 6px;
+  padding: 6px;
+  border-radius: 6px;
+  color: var(--muted);
+}
+.copy-btn:hover { color: #fff; background: rgba(255,255,255,0.02); }
+
+/* Small responsive tweak: restore original mobile stacking behavior */
+@media (max-width:720px){
+  .action-stack { flex-direction: row; flex-wrap: wrap; gap:6px; align-items:center; }
+  .dest-line { white-space: normal; word-break: break-word; }
+}
+
+
+th.actions-col {
+  text-align: center !important;
+}
+td.actions-col {
+  text-align: center !important;
+}
+.action-stack {
+  align-items: center !important;
+}
+
+
+/* footer and misc */
+.foot{margin-top:18px;color:var(--muted);font-size:13px}
+.center{text-align:center}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* responsive */
+@media (max-width: 920px){
+  .app-grid{grid-template-columns: 1fr; padding:12px}
+  .sidebar{display:flex;flex-direction:row;align-items:center;gap:12px;padding:12px}
+  .nav{flex-direction:row}
+  .panel-head{flex-direction:column;align-items:flex-start;gap:8px}
+  .table-wrap{overflow:auto}
+  .links-table{min-width:700px}
+}
+
+.foot {
+  text-align: center;                               /* centers text */
+  padding: 20px 0;                                   /* vertical spacing */
+  margin-top: 60px;                                  /* space above footer */
+  border-top: 1px solid rgba(255, 255, 255, 0.08);   /* subtle top border */
+  color: var(--muted);                               /* soft gray text */
+  font-size: 15px;
+  letter-spacing: 0.3px;                             /* nicer look */
+  background: transparent;                           /* let page bg show */
+}

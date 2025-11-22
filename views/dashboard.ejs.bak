@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TinyLink — Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-grid">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">TL</div>
+        <div class="brand-text">
+          <div class="title">TinyLink</div>
+          <div class="subtitle">Shorten · Manage · Track</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="/dashboard" class="nav-item active">Dashboard</a>
+        <a href="/create" class="nav-item">Create Link</a>
+        <a href="/api/links" class="nav-item">API</a>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="muted">Plan</div>
+        <div class="strong">Free</div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="top-left">
+          <h1 class="page-title">Dashboard</h1>
+          <div class="page-sub">Overview of your short links and recent activity</div>
+        </div>
+
+        <div class="top-right">
+          <form class="search-form" action="/dashboard" method="GET">
+            <input name="q" class="search-input" placeholder="Search links or destination..." value="<%= typeof q !== 'undefined' ? q : '' %>" />
+            <button class="btn small">Search</button>
+          </form>
+
+          <a href="/create" class="btn primary">+ New Link</a>
+          <div class="avatar">S</div>
+        </div>
+      </header>
+
+      <!-- STATS -->
+      <section class="stats">
+        <div class="card">
+          <div class="label">Total Links</div>
+          <div class="value"><%= links.length %></div>
+        </div>
+
+        <div class="card">
+          <div class="label">Total Clicks</div>
+          <div class="value">
+            <%
+              let clicks = 0;
+              links.forEach(l => clicks += (l.total_clicks || 0));
+            %>
+            <%= clicks %>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="label">Top Link</div>
+          <%
+            let top = links.length ? links.slice().sort((a,b)=>b.total_clicks - a.total_clicks)[0] : null;
+          %>
+          <div class="value small">
+            <%= top ? ('/' + top.short_code + ' → ' + top.original_url) : '—' %>
+          </div>
+        </div>
+      </section>
+
+      <!-- TABLE -->
+      <section class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Your Links</h2>
+          <div class="panel-meta muted">Showing <%= links.length %> links</div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="links-table">
+            <thead>
+              <tr>
+                <th>Short</th>
+                <th>Destination</th>
+                <th style="text-align:center">Clicks</th>
+                <th>Created</th>
+                <th class="actions-col">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <% if (links.length === 0) { %>
+                <tr><td colspan="5" class="center muted">No links found.</td></tr>
+              <% } %>
+
+              <% links.forEach(link => { %>
+                <tr>
+
+                 <!-- SHORT -->
+                 <td class="short-col">
+                 <div class="short-top">
+                 <a href="/<%= link.short_code %>" class="short-link">/<%= link.short_code %></a>
+                 <button class="icon copy-btn" data-code="<%= link.short_code %>">⧉</button>
+                 </div>
+                 </td>
+   
+                 <!-- DESTINATION (STACKED LIKE YOUR SCREENSHOT) -->
+                 <td class="dest-col">
+                 <div class="dest-stack">
+                 <% 
+                 const d = link.original_url.replace(/^https?:\/\//,'');
+                 const chunk = 8;
+                 for (let i = 0; i < d.length; i += chunk) { 
+                 %>
+                 <div class="dest-line"><%= d.slice(i, i+chunk) %></div>
+                 <% } %>
+                 </div>
+                 </td>
+
+                 <!-- CLICKS -->
+                 <td class="clicks-col">
+                 <div class="clicks-number"><%= link.total_clicks || 0 %></div>
+                 </td>
+
+                 <!-- CREATED -->
+                 <td class="created-col">
+                 <div class="created-text">
+                 <%= new Date(link.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) %>
+                 </div>
+                 </td>
+
+                 <!-- ACTIONS -->
+                 <td class="actions-col">
+                 <div class="action-stack">
+                 <form action="/links/<%= link.short_code %>/delete" method="POST" onsubmit="return confirm('Delete this link?')">
+                 <button class="btn small ghost">Delete</button>
+                 </form>
+                 <a class="btn small ghost" href="/links/<%= link.short_code %>/edit">Edit</a>
+                 <a class="btn small ghost" href="/api/links/<%= link.short_code %>">Stats</a>
+                 </div>
+                 </td>
+                </tr>
+              <% }) %>
+
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+
+      <footer class="foot">© <%= new Date().getFullYear() %> TinyLink — Built with ❤️</footer>
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('click', function(e){
+      if (!e.target.matches('.copy-btn')) return;
+      const url = location.origin + '/' + e.target.dataset.code;
+      navigator.clipboard.writeText(url);
+      e.target.innerText = '✓';
+      setTimeout(() => e.target.innerText = '⧉', 1200);
+    });
+  </script>
+</body>
+</html>

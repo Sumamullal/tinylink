@@ -1,0 +1,26 @@
+{
+  "name": "tinylink",
+  "version": "1.0.0",
+  "description": "TinyLink URL Shortener",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^12.4.5",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "pg": "^8.16.3",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
+    "validator": "^13.15.23"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

@@ -1,0 +1,147 @@
+// routes/links.js (full, with list/search/create/edit/delete/redirect)
+const express = require('express');
+const router = express.Router();
+const db = require('../db');
+
+// Dashboard: list links, with optional search + pagination
+router.get(['/', '/dashboard'], async (req, res, next) => {
+  try {
+    const q = (req.query.q || '').trim();
+    const page = Math.max(parseInt(req.query.page || '1', 10), 1);
+    const perPage = 10;
+    const offset = (page - 1) * perPage;
+    const like = `%${q}%`;
+
+    const countRow = await db.get(
+      `SELECT COUNT(*) as cnt FROM links WHERE short_code LIKE ? OR original_url LIKE ?`,
+      [like, like]
+    );
+    const total = countRow ? countRow.cnt : 0;
+    const totalPages = Math.max(Math.ceil(total / perPage), 1);
+
+    const links = await db.all(
+      `SELECT short_code, original_url, total_clicks, created_at
+       FROM links
+       WHERE short_code LIKE ? OR original_url LIKE ?
+       ORDER BY created_at DESC
+       LIMIT ? OFFSET ?`,
+      [like, like, perPage, offset]
+    );
+
+    res.render('dashboard', { links, q, page, totalPages, total });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Show create form
+router.get('/create', (req, res) => {
+  res.render('create', { error: null, values: {} });
+});
+
+// Create link
+router.post('/create', async (req, res, next) => {
+  try {
+    let { destination, custom } = req.body;
+    if (!destination) return res.render('create', { error: 'Destination required', values: req.body });
+
+    if (!/^https?:\/\//i.test(destination)) destination = 'https://' + destination;
+    const code = custom && custom.trim() ? custom.trim() : Math.random().toString(36).slice(2, 8);
+
+    await db.run(
+      `INSERT INTO links (short_code, original_url, total_clicks, created_at)
+       VALUES (?, ?, 0, datetime('now'))`,
+      [code, destination]
+    );
+
+    // After create, redirect to dashboard (or you may want to show created code)
+    res.redirect('/dashboard');
+  } catch (err) {
+    if (err && err.message && (err.message.includes('UNIQUE') || err.message.includes('constraint'))) {
+      return res.render('create', { error: 'Short code exists. Try another.', values: req.body });
+    }
+    next(err);
+  }
+});
+
+// Show edit form
+router.get('/links/:code/edit', async (req, res, next) => {
+  try {
+    const code = req.params.code;
+    const link = await db.get('SELECT short_code, original_url FROM links WHERE short_code = ?', [code]);
+    if (!link) return res.status(404).render('404', { url: req.originalUrl });
+    res.render('edit', { link, error: null });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Apply edit (update)
+router.post('/links/:code/edit', async (req, res, next) => {
+  try {
+    const code = req.params.code;
+    let { destination } = req.body;
+    if (!destination) {
+      const link = await db.get('SELECT short_code, original_url FROM links WHERE short_code = ?', [code]);
+      return res.render('edit', { link, error: 'Destination is required' });
+    }
+
+    if (!/^https?:\/\//i.test(destination)) destination = 'https://' + destination;
+
+    await db.run(
+      'UPDATE links SET original_url = ? WHERE short_code = ?',
+      [destination, code]
+    );
+
+    res.redirect('/dashboard');
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Delete (POST)
+router.post('/links/:code/delete', async (req, res, next) => {
+  try {
+    const code = req.params.code;
+    const row = await db.get('SELECT short_code FROM links WHERE short_code = ?', [code]);
+    if (!row) return res.status(404).render('404', { url: req.originalUrl });
+
+    await db.run('DELETE FROM links WHERE short_code = ?', [code]);
+    res.redirect('/dashboard');
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Redirect short → destination (increments clicks)
+// Redirect short → destination (increments clicks) — normalizes URL before redirect
+router.get('/:code', async (req, res, next) => {
+  try {
+    const code = req.params.code;
+    const link = await db.get('SELECT * FROM links WHERE short_code = ?', [code]);
+    if (!link) return next();
+
+    // best-effort increment (don't block on failure)
+    try {
+      await db.run('UPDATE links SET total_clicks = total_clicks + 1 WHERE short_code = ?', [code]);
+    } catch (e) {
+      console.error('Failed to increment clicks:', e);
+    }
+
+    // pick the stored URL from likely columns and normalize it
+    let dest = (link.original_url || link.destination || link.url || '').toString().trim();
+    if (!dest) return next();
+
+    // If missing protocol, assume https
+    if (!/^https?:\/\//i.test(dest)) dest = 'https://' + dest;
+
+    // optionally log for debugging:
+    // console.log('Redirecting short code', code, 'to', dest);
+
+    return res.redirect(dest);
+  } catch (err) {
+    next(err);
+  }
+});
+
+module.exports = router;

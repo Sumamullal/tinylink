@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Edit Link — <%= link.short_code %></title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-grid" style="max-width:920px; margin:28px auto;">
+    <aside class="sidebar" style="min-height:120px;padding:16px;">
+      <div class="brand">
+        <div class="logo">TL</div>
+        <div class="brand-text">
+          <div class="title">TinyLink</div>
+          <div class="subtitle">Edit link</div>
+        </div>
+      </div>
+      <nav class="nav" style="margin-top:8px;">
+        <a href="/dashboard" class="nav-item">Dashboard</a>
+        <a href="/create" class="nav-item">Create Link</a>
+      </nav>
+    </aside>
+
+    <main class="main" style="padding:18px;">
+      <header class="topbar" style="margin-bottom:18px;">
+        <div class="top-left">
+          <h1 class="page-title">Edit Link</h1>
+          <div class="page-sub">Change the destination URL for <span class="mono">/<%= link.short_code %></span></div>
+        </div>
+        <div class="top-right">
+          <a href="/dashboard" class="btn small">Back to dashboard</a>
+        </div>
+      </header>
+
+      <section class="panel" style="padding:18px;">
+        <% if (error) { %>
+          <div style="margin:12px 0;padding:10px;border-radius:8px;background:rgba(255,60,80,0.06);border:1px solid rgba(255,60,80,0.08);color:#ffd7db;">
+            <strong>Error:</strong> <%= error %>
+          </div>
+        <% } %>
+
+        <form method="POST" action="/links/<%= link.short_code %>/edit" style="display:grid;gap:12px;">
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label style="font-weight:700;">Short code</label>
+            <input type="text" disabled value="/<%= link.short_code %>" class="search-input"/>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label style="font-weight:700;">Destination URL</label>
+            <input name="destination" type="url" required class="search-input" value="<%= link.original_url %>"/>
+          </div>
+
+          <div style="display:flex;gap:12px;align-items:center;">
+            <button class="btn primary" type="submit">Save changes</button>
+            <form style="display:inline" action="/links/<%= link.short_code %>/delete" method="POST" onsubmit="return confirm('Delete this link?')">
+              <button type="submit" class="btn small ghost">Delete</button>
+            </form>
+          </div>
+        </form>
+      </section>
+
+      <footer class="foot">© <%= new Date().getFullYear() %> TinyLink — Built with ❤️</footer>
+    </main>
+  </div>
+</body>
+</html>
