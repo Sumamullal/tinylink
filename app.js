@@ -8,15 +8,7 @@ const validator = require('validator');
 const db = require('./db');
 
 // ===== DEBUG: print table schema and wrap prepares to find SQLITE_RANGE =====
-(async () => {
-  try {
-    console.log('DEBUG: listing links table schema...');
-    const schema = await db.all("PRAGMA table_info('links')");
-    console.log('DEBUG: links table columns:', schema.map(c => `${c.cid}:${c.name}:${c.type}`).join(' | '));
-  } catch (e) {
-    console.error('DEBUG: failed to read table schema:', e && e.message ? e.message : e);
-  }
-})();
+
 
 
 const app = express();
