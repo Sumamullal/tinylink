@@ -3,9 +3,10 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const validator = require('validator');
-
-
 const db = require('./db');
+const session = require('express-session');
+const bcrypt = require('bcrypt');
+
 
 // ===== DEBUG: print table schema and wrap prepares to find SQLITE_RANGE =====
 
@@ -21,6 +22,21 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'tinylinksecret',
+  resave: false,
+  saveUninitialized: false,
+}));
+
+
+function requireLogin(req, res, next) {
+  if (!req.session.userId) {
+    return res.redirect('/login');
+  }
+  next();
+}
+
 
 
 
@@ -241,19 +257,115 @@ app.post('/create', (req, res) => {
   }
 });
 
+// ---------- Auth routes ----------
+
+// Show signup form
+app.get('/signup', (req, res) => {
+  res.render('signup', { error: null, values: {} });
+});
+
+// Handle signup form
+app.post('/signup', async (req, res) => {
+  try {
+    const { email, password, confirmPassword } = req.body;
+    const values = { email };
+
+    if (!email || !password || !confirmPassword) {
+      return res.render('signup', { error: 'All fields are required.', values });
+    }
+
+    if (password !== confirmPassword) {
+      return res.render('signup', { error: 'Passwords do not match.', values });
+    }
+
+    // simple email validation
+    if (!validator.isEmail(email)) {
+      return res.render('signup', { error: 'Invalid email address.', values });
+    }
+
+    // check if user exists
+    const existing = db.get('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing) {
+      return res.render('signup', { error: 'Email already registered.', values });
+    }
+
+    const password_hash = await bcrypt.hash(password, 10);
+    const created_at = new Date().toISOString();
+
+    const result = db.run(
+      'INSERT INTO users (email, password_hash, created_at) VALUES (?, ?, ?)',
+      [email, password_hash, created_at]
+    );
+
+    // log user in
+    req.session.userId = result.lastInsertRowid || result.lastID;
+    req.session.email = email;
+
+    return res.redirect('/dashboard');
+  } catch (err) {
+    console.error('POST /signup error:', err);
+    return res.render('signup', {
+      error: 'Server error — please try again.',
+      values: { email: req.body.email }
+    });
+  }
+});
+
+// Show login form
+app.get('/login', (req, res) => {
+  res.render('login', { error: null, values: {} });
+});
+
+// Handle login
+app.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const values = { email };
+
+    if (!email || !password) {
+      return res.render('login', { error: 'Email and password are required.', values });
+    }
+
+    const user = db.get('SELECT * FROM users WHERE email = ?', [email]);
+    if (!user) {
+      return res.render('login', { error: 'Invalid email or password.', values });
+    }
+
+    const ok = await bcrypt.compare(password, user.password_hash);
+    if (!ok) {
+      return res.render('login', { error: 'Invalid email or password.', values });
+    }
+
+    req.session.userId = user.id;
+    req.session.email = user.email;
+
+    return res.redirect('/dashboard');
+  } catch (err) {
+    console.error('POST /login error:', err);
+    return res.render('login', {
+      error: 'Server error — please try again.',
+      values: { email: req.body.email }
+    });
+  }
+});
+
+// Logout
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.redirect('/login');
+  });
+});
+
 
 // Root landing (simple)
+// Root: if logged in, go to dashboard; else go to login
 app.get('/', (req, res) => {
-  res.send(`
-    <h1>TinyLink</h1>
-    <p>Server is running. Useful endpoints:</p>
-    <ul>
-      <li><a href="/healthz">/healthz</a> — healthcheck (JSON)</li>
-      <li><a href="/api/links">/api/links</a> — API</li>
-    </ul>
-    <p>Next: we'll add the dashboard UI at / and API endpoints.</p>
-  `);
+  if (req.session.userId) {
+    return res.redirect('/dashboard');
+  }
+  return res.redirect('/login');
 });
+
 
 // DB test route (temporary)
 app.get('/db-test', (req, res) => {

@@ -21,6 +21,19 @@ db.exec(`
   );
 `);
 
+// NEW: users table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+`);
+
+console.log('Opened DB at', dbPath);
+
+
 console.log('Opened DB at', dbPath);
 
 /**

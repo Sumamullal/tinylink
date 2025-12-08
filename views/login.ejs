@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login - TinyLink</title>
+</head>
+<body>
+  <h1>TinyLink Login</h1>
+
+  <% if (error) { %>
+    <p style="color: red;"><%= error %></p>
+  <% } %>
+
+  <form action="/login" method="POST">
+    <div>
+      <label>Email:</label>
+      <input type="email" name="email" value="<%= values.email || '' %>" required>
+    </div>
+    <div>
+      <label>Password:</label>
+      <input type="password" name="password" required>
+    </div>
+
+    <button type="submit">Login</button>
+  </form>
+
+  <p>New here? <a href="/signup">Create an account</a></p>
+</body>
+</html>
