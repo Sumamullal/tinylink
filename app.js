@@ -32,11 +32,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 
-
-
-
-
-
 const linksRouter = require('./routes/links');
 app.use('/', linksRouter);
 
@@ -279,7 +274,7 @@ app.get('/db-test', (req, res) => {
 });
 
 // Redirect (302) with click increment
-/*app.get('/:code', (req, res) => {
+app.get('/:code', (req, res) => {
   try {
     const { code } = req.params;
     const row = findByCodeStmt.get(code);
@@ -293,15 +288,6 @@ app.get('/db-test', (req, res) => {
     console.error('Redirect error:', err);
     return res.status(500).send('Internal server error');
   }
-});*/
-
-// error handler — must be after all routes
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err && (err.stack || err.message) ? (err.stack || err.message) : err);
-  if (req.originalUrl && req.originalUrl.startsWith('/api/')) {
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-  res.status(500).send('Server error');
 });
 
 
