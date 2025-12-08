@@ -1,4 +1,4 @@
-﻿// db.js — simple better-sqlite3 setup
+﻿// db.js — better-sqlite3 with helpers compatible with old API
 const path = require('path');
 const Database = require('better-sqlite3');
 
@@ -22,5 +22,23 @@ db.exec(`
 `);
 
 console.log('Opened DB at', dbPath);
+
+/**
+ * Helper methods to mimic the old sqlite3 wrapper:
+ *  - db.get(sql, params)
+ *  - db.all(sql, params)
+ *  - db.run(sql, params)
+ */
+db.get = function (sql, params = []) {
+  return db.prepare(sql).get(params);
+};
+
+db.all = function (sql, params = []) {
+  return db.prepare(sql).all(params);
+};
+
+db.run = function (sql, params = []) {
+  return db.prepare(sql).run(params);
+};
 
 module.exports = db;
