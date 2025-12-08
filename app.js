@@ -38,6 +38,114 @@ function requireLogin(req, res, next) {
 }
 
 
+// ---------- Auth routes ----------
+
+// Show signup form
+app.get('/signup', (req, res) => {
+  res.render('signup', { error: null, values: {} });
+});
+
+// Handle signup form
+app.post('/signup', async (req, res) => {
+  try {
+    const { email, password, confirmPassword } = req.body;
+    const values = { email };
+
+    if (!email || !password || !confirmPassword) {
+      return res.render('signup', { error: 'All fields are required.', values });
+    }
+
+    if (password !== confirmPassword) {
+      return res.render('signup', { error: 'Passwords do not match.', values });
+    }
+
+    // simple email validation
+    if (!validator.isEmail(email)) {
+      return res.render('signup', { error: 'Invalid email address.', values });
+    }
+
+    // check if user exists
+    const existing = db.get('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing) {
+      return res.render('signup', { error: 'Email already registered.', values });
+    }
+
+    const password_hash = await bcrypt.hash(password, 10);
+    const created_at = new Date().toISOString();
+
+    const result = db.run(
+      'INSERT INTO users (email, password_hash, created_at) VALUES (?, ?, ?)',
+      [email, password_hash, created_at]
+    );
+
+    // log user in
+    req.session.userId = result.lastInsertRowid || result.lastID;
+    req.session.email = email;
+
+    return res.redirect('/dashboard');
+  } catch (err) {
+    console.error('POST /signup error:', err);
+    return res.render('signup', {
+      error: 'Server error — please try again.',
+      values: { email: req.body.email }
+    });
+  }
+});
+
+// Root landing (simple)
+// Root: if logged in, go to dashboard; else go to login
+app.get('/', (req, res) => {
+  if (req.session.userId) {
+    return res.redirect('/dashboard');
+  }
+  return res.redirect('/login');
+});
+
+
+// Show login form
+app.get('/login', (req, res) => {
+  res.render('login', { error: null, values: {} });
+});
+
+// Handle login
+app.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const values = { email };
+
+    if (!email || !password) {
+      return res.render('login', { error: 'Email and password are required.', values });
+    }
+
+    const user = db.get('SELECT * FROM users WHERE email = ?', [email]);
+    if (!user) {
+      return res.render('login', { error: 'Invalid email or password.', values });
+    }
+
+    const ok = await bcrypt.compare(password, user.password_hash);
+    if (!ok) {
+      return res.render('login', { error: 'Invalid email or password.', values });
+    }
+
+    req.session.userId = user.id;
+    req.session.email = user.email;
+
+    return res.redirect('/dashboard');
+  } catch (err) {
+    console.error('POST /login error:', err);
+    return res.render('login', {
+      error: 'Server error — please try again.',
+      values: { email: req.body.email }
+    });
+  }
+});
+
+// Logout
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.redirect('/login');
+  });
+});
 
 
 const linksRouter = require('./routes/links');
@@ -257,114 +365,10 @@ app.post('/create', (req, res) => {
   }
 });
 
-// ---------- Auth routes ----------
-
-// Show signup form
-app.get('/signup', (req, res) => {
-  res.render('signup', { error: null, values: {} });
-});
-
-// Handle signup form
-app.post('/signup', async (req, res) => {
-  try {
-    const { email, password, confirmPassword } = req.body;
-    const values = { email };
-
-    if (!email || !password || !confirmPassword) {
-      return res.render('signup', { error: 'All fields are required.', values });
-    }
-
-    if (password !== confirmPassword) {
-      return res.render('signup', { error: 'Passwords do not match.', values });
-    }
-
-    // simple email validation
-    if (!validator.isEmail(email)) {
-      return res.render('signup', { error: 'Invalid email address.', values });
-    }
-
-    // check if user exists
-    const existing = db.get('SELECT id FROM users WHERE email = ?', [email]);
-    if (existing) {
-      return res.render('signup', { error: 'Email already registered.', values });
-    }
-
-    const password_hash = await bcrypt.hash(password, 10);
-    const created_at = new Date().toISOString();
-
-    const result = db.run(
-      'INSERT INTO users (email, password_hash, created_at) VALUES (?, ?, ?)',
-      [email, password_hash, created_at]
-    );
-
-    // log user in
-    req.session.userId = result.lastInsertRowid || result.lastID;
-    req.session.email = email;
-
-    return res.redirect('/dashboard');
-  } catch (err) {
-    console.error('POST /signup error:', err);
-    return res.render('signup', {
-      error: 'Server error — please try again.',
-      values: { email: req.body.email }
-    });
-  }
-});
-
-// Show login form
-app.get('/login', (req, res) => {
-  res.render('login', { error: null, values: {} });
-});
-
-// Handle login
-app.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const values = { email };
-
-    if (!email || !password) {
-      return res.render('login', { error: 'Email and password are required.', values });
-    }
-
-    const user = db.get('SELECT * FROM users WHERE email = ?', [email]);
-    if (!user) {
-      return res.render('login', { error: 'Invalid email or password.', values });
-    }
-
-    const ok = await bcrypt.compare(password, user.password_hash);
-    if (!ok) {
-      return res.render('login', { error: 'Invalid email or password.', values });
-    }
-
-    req.session.userId = user.id;
-    req.session.email = user.email;
-
-    return res.redirect('/dashboard');
-  } catch (err) {
-    console.error('POST /login error:', err);
-    return res.render('login', {
-      error: 'Server error — please try again.',
-      values: { email: req.body.email }
-    });
-  }
-});
-
-// Logout
-app.get('/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.redirect('/login');
-  });
-});
 
 
-// Root landing (simple)
-// Root: if logged in, go to dashboard; else go to login
-app.get('/', (req, res) => {
-  if (req.session.userId) {
-    return res.redirect('/dashboard');
-  }
-  return res.redirect('/login');
-});
+
+
 
 
 // DB test route (temporary)
