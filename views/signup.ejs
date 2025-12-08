@@ -1,34 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Sign up - TinyLink</title>
+  <meta charset="UTF-8">
+  <title>Sign up · TinyLink</title>
+  <link rel="stylesheet" href="/css/auth.css">
 </head>
 <body>
-  <h1>Create Account</h1>
-
-  <% if (error) { %>
-    <p style="color: red;"><%= error %></p>
-  <% } %>
-
-  <form action="/signup" method="POST">
-    <div>
-      <label>Email:</label>
-      <input type="email" name="email" value="<%= values.email || '' %>" required>
+  <div class="auth-wrapper">
+    <div class="auth-header">
+      <div class="auth-badge">
+        <span>✨ Get Started</span>
+      </div>
+      <h1 class="auth-title">Create your TinyLink account</h1>
+      <p class="auth-subtitle">One account to manage all your short URLs.</p>
     </div>
 
-    <div>
-      <label>Password:</label>
-      <input type="password" name="password" required>
+    <% if (error) { %>
+      <div class="auth-error"><%= error %></div>
+    <% } %>
+
+    <form class="auth-form" action="/signup" method="POST">
+      <div class="auth-field">
+        <label class="auth-label">Email</label>
+        <input
+          class="auth-input"
+          type="email"
+          name="email"
+          value="<%= values.email || '' %>"
+          placeholder="you@example.com"
+          required
+        >
+      </div>
+
+      <div class="auth-field">
+        <label class="auth-label">Password</label>
+        <input
+          class="auth-input"
+          type="password"
+          name="password"
+          placeholder="Choose a strong password"
+          required
+        >
+      </div>
+
+      <div class="auth-field">
+        <label class="auth-label">Confirm password</label>
+        <input
+          class="auth-input"
+          type="password"
+          name="confirmPassword"
+          placeholder="Repeat your password"
+          required
+        >
+      </div>
+
+      <button type="submit" class="auth-button">
+        Create account
+      </button>
+
+      <p class="auth-hint">
+        We never show your email to anyone. It’s only used for signing in.
+      </p>
+    </form>
+
+    <div class="auth-footer">
+      <span>Already have an account?</span>
+      <a href="/login">Log in</a>
     </div>
-
-    <div>
-      <label>Confirm password:</label>
-      <input type="password" name="confirmPassword" required>
-    </div>
-
-    <button type="submit">Sign up</button>
-  </form>
-
-  <p>Already have an account? <a href="/login">Login here</a></p>
+  </div>
 </body>
 </html>
